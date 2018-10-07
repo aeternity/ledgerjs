@@ -2,7 +2,7 @@ node_modules
 .DS_Store
 *.pem
 browser/
-packages/**/lib/
+lib/
 flow-typed/
 lerna-debug.log
 lerna-error.log
