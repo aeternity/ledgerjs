@@ -21,13 +21,13 @@ import { splitPath, foreach } from "./utils";
 import type Transport from "@ledgerhq/hw-transport";
 
 /**
- * Ethereum API
+ * aeternity API
  *
  * @example
- * import Eth from "@ledgerhq/hw-app-eth";
- * const eth = new Eth(transport)
+ * import Ae from "@aeternity/ledger-app-api";
+ * const ae = new Ae(transport)
  */
-export default class Eth {
+export default class Ae {
   transport: Transport<*>;
 
   constructor(transport: Transport<*>, scrambleKey: string = "w0w") {
@@ -45,13 +45,13 @@ export default class Eth {
   }
 
   /**
-   * get Ethereum address for a given BIP 32 path.
+   * get aeternity address for a given BIP 32 path.
    * @param path a path in BIP 32 format
    * @option boolDisplay optionally enable or not the display
    * @option boolChaincode optionally enable or not the chaincode request
    * @return an object with a publicKey, address and (optionally) chainCode
    * @example
-   * eth.getAddress("44'/60'/0'/0/0").then(o => o.address)
+   * ae.getAddress("44'/60'/0'/0/0").then(o => o.address)
    */
   getAddress(
     path: string,
@@ -106,7 +106,7 @@ export default class Eth {
   /**
    * You can sign a transaction and retrieve v, r, s given the raw transaction and the BIP 32 path of the account to sign
    * @example
-   eth.signTransaction("44'/60'/0'/0/0", "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(result => ...)
+   ae.signTransaction("44'/60'/0'/0/0", "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(result => ...)
    */
   signTransaction(
     path: string,
@@ -173,7 +173,7 @@ export default class Eth {
   /**
   * You can sign a message according to eth_sign RPC call and retrieve v, r, s given the message and the BIP 32 path of the account to sign.
   * @example
-eth.signPersonalMessage("44'/60'/0'/0/0", Buffer.from("test").toString("hex")).then(result => {
+ae.signPersonalMessage("44'/60'/0'/0/0", Buffer.from("test").toString("hex")).then(result => {
   var v = result['v'] - 27;
   v = v.toString(16);
   if (v.length < 2) {

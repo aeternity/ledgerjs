@@ -1,28 +1,27 @@
 {
-  "name": "@ledgerhq/hw-app-eth",
-  "version": "4.23.0",
-  "description": "Ledger Hardware Wallet Ethereum API",
+  "name": "@aeternity/ledger-app-api",
+  "version": "0.0.0",
+  "description": "Ledger Hardware Wallet aeternity API",
   "keywords": [
     "Ledger",
     "LedgerWallet",
-    "Ethereum",
-    "eth",
+    "aeternity",
+    "ae",
     "NanoS",
-    "Blue",
     "Hardware Wallet"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/LedgerHQ/ledgerjs"
+    "url": "https://github.com/aeternity/ledger-app-api"
   },
   "bugs": {
-    "url": "https://github.com/LedgerHQ/ledgerjs/issues"
+    "url": "https://github.com/aeternity/ledger-app-api/issues"
   },
-  "homepage": "https://github.com/LedgerHQ/ledgerjs",
+  "homepage": "https://github.com/aeternity/ledger-app-api",
   "publishConfig": {
     "access": "public"
   },
-  "main": "lib/Eth.js",
+  "main": "lib/Ae.js",
   "license": "Apache-2.0",
   "dependencies": {
     "@ledgerhq/hw-transport": "^4.21.0"
