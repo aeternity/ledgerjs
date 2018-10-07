@@ -51,107 +51,61 @@ export default class Ae {
   }
 
   /**
-   * get aeternity address for a given BIP 32 path.
-   * @param path a path in BIP 32 format
-   * @option boolDisplay optionally enable or not the display
-   * @option boolChaincode optionally enable or not the chaincode request
-   * @return an object with a publicKey, address and (optionally) chainCode
+   * get aeternity address for a given account index.
+   * @param accountIndex
+   * @return address
    * @example
-   * ae.getAddress("44'/60'/0'/0/0").then(o => o.address)
+   * ae.getAddress(0).then(address => ...)
    */
-  getAddress(
-    path: integer,
-    boolDisplay?: boolean,
-    boolChaincode?: boolean
-  ): Promise<{
-    publicKey: string,
-    address: string,
-    chainCode?: string
-  }> {
-    let buffer = new Buffer(1);
-    buffer[0] = path;
-    return this.transport
-      .send(
-        CLA,
-        GET_ADDRESS,
-        boolDisplay ? 0x01 : 0x00,
-        boolChaincode ? 0x01 : 0x00,
-        buffer
-      )
-      .then(response => {
-        let result = {};
-        let publicKeyLength = response[0];
-        let addressLength = response[1 + publicKeyLength];
-        result.publicKey = response
-          .slice(1, 1 + publicKeyLength)
-          .toString("hex");
-        result.address =
-          "ak_" +
-          response
-            .slice(
-              1 + publicKeyLength + 1,
-              1 + publicKeyLength + 1 + addressLength
-            )
-            .toString("ascii");
-        if (boolChaincode) {
-          result.chainCode = response
-            .slice(
-              1 + publicKeyLength + 1 + addressLength,
-              1 + publicKeyLength + 1 + addressLength + 32
-            )
-            .toString("hex");
-        }
-        return result;
-      });
+  async getAddress(
+    accountIndex: integer
+  ): Promise<string> {
+    const buffer = new Buffer(4);
+    buffer.writeUInt32BE(accountIndex);
+    const response = await this.transport.send(
+      CLA,
+      GET_ADDRESS,
+      buffer
+    );
+    const addressLength = response[0];
+    return `ak_${response.slice(1, 1 + addressLength).toString("ascii")}`;
   }
 
   /**
-   * You can sign a transaction and retrieve v, r, s given the raw transaction and the BIP 32 path of the account to sign
+   * You can sign a transaction and retrieve signature given the raw transaction and the index of the account to sign
    * @example
-   ae.signTransaction("44'/60'/0'/0/0", "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(result => ...)
+   ae.signTransaction(0, "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(signature => ...)
    */
-  signTransaction(
-    path: integer,
+  async signTransaction(
+    accountIndex: integer,
     rawTxHex: string
-  ): Promise<{
-    s: string,
-    v: string,
-    r: string
-  }> {
+  ): Promise<string> {
     let offset = 0;
-    let rawTx = new Buffer(rawTxHex, "hex");
-    let toSend = [];
-    let response;
+    const rawTx = new Buffer(rawTxHex, "hex");
+    const toSend = [];
     while (offset !== rawTx.length) {
-      let maxChunkSize = offset === 0 ? 150 - 1 : 150;
-      let chunkSize =
+      const maxChunkSize = offset === 0 ? 150 - 4 : 150;
+      const chunkSize =
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
-      let buffer = new Buffer(
-        offset === 0 ? 1 + chunkSize : chunkSize
+      const buffer = new Buffer(
+        offset === 0 ? 4 + chunkSize : chunkSize
       );
       if (offset === 0) {
-        buffer[0] = path
-        rawTx.copy(buffer, 1, offset, offset + chunkSize);
+        buffer.writeUInt32BE(accountIndex);
+        rawTx.copy(buffer, 4, offset, offset + chunkSize);
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
       }
       toSend.push(buffer);
       offset += chunkSize;
     }
-    return foreach(toSend, (data, i) =>
-      this.transport
-        .send(CLA, SIGN_TRANSACTION, i === 0 ? 0x00 : 0x80, 0x00, data)
-        .then(apduResponse => {
-          response = apduResponse;
-        })
-    ).then(() => {
-      const v = response.slice(0, 1).toString("hex");
-      const r = response.slice(1, 1 + 32).toString("hex");
-      const s = response.slice(1 + 32, 1 + 32 + 32).toString("hex");
-      return { v, r, s };
-    });
+    const response = await toSend.reduce(
+      (p, data, i) => p.then(() => this.transport
+        .send(CLA, SIGN_TRANSACTION, i === 0 ? 0x00 : 0x80, 0x00, data)),
+      Promise.resolve());
+    return response.toString("hex");
   }
 
   /**
