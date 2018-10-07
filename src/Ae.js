@@ -20,6 +20,12 @@
 import { splitPath, foreach } from "./utils";
 import type Transport from "@ledgerhq/hw-transport";
 
+const CLA = 0xe0;
+const GET_ADDRESS = 0x02;
+const SIGN_TRANSACTION = 0x04;
+const GET_APP_CONFIGURATION = 0x06;
+const SIGN_PERSONAL_MESSAGE = 0x08;
+
 /**
  * aeternity API
  *
@@ -66,8 +72,8 @@ export default class Ae {
     buffer[0] = path;
     return this.transport
       .send(
-        0xe0,
-        0x02,
+        CLA,
+        GET_ADDRESS,
         boolDisplay ? 0x01 : 0x00,
         boolChaincode ? 0x01 : 0x00,
         buffer
@@ -136,7 +142,7 @@ export default class Ae {
     }
     return foreach(toSend, (data, i) =>
       this.transport
-        .send(0xe0, 0x04, i === 0 ? 0x00 : 0x80, 0x00, data)
+        .send(CLA, SIGN_TRANSACTION, i === 0 ? 0x00 : 0x80, 0x00, data)
         .then(apduResponse => {
           response = apduResponse;
         })
@@ -154,7 +160,7 @@ export default class Ae {
     arbitraryDataEnabled: number,
     version: string
   }> {
-    return this.transport.send(0xe0, 0x06, 0x00, 0x00).then(response => {
+    return this.transport.send(CLA, GET_APP_CONFIGURATION, 0x00, 0x00).then(response => {
       let result = {};
       result.arbitraryDataEnabled = response[0] & 0x01;
       result.version = "" + response[1] + "." + response[2] + "." + response[3];
@@ -216,7 +222,7 @@ ae.signPersonalMessage("44'/60'/0'/0/0", Buffer.from("test").toString("hex")).th
     }
     return foreach(toSend, (data, i) =>
       this.transport
-        .send(0xe0, 0x08, i === 0 ? 0x00 : 0x80, 0x00, data)
+        .send(CLA, SIGN_PERSONAL_MESSAGE, i === 0 ? 0x00 : 0x80, 0x00, data)
         .then(apduResponse => {
           response = apduResponse;
         })
