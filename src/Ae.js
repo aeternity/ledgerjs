@@ -54,7 +54,7 @@ export default class Ae {
    * ae.getAddress("44'/60'/0'/0/0").then(o => o.address)
    */
   getAddress(
-    path: string,
+    path: integer,
     boolDisplay?: boolean,
     boolChaincode?: boolean
   ): Promise<{
@@ -62,12 +62,8 @@ export default class Ae {
     address: string,
     chainCode?: string
   }> {
-    let paths = splitPath(path);
-    let buffer = new Buffer(1 + paths.length * 4);
-    buffer[0] = paths.length;
-    paths.forEach((element, index) => {
-      buffer.writeUInt32BE(element, 1 + 4 * index);
-    });
+    let buffer = new Buffer(1);
+    buffer[0] = path;
     return this.transport
       .send(
         0xe0,
@@ -84,7 +80,7 @@ export default class Ae {
           .slice(1, 1 + publicKeyLength)
           .toString("hex");
         result.address =
-          "0x" +
+          "ak_" +
           response
             .slice(
               1 + publicKeyLength + 1,
@@ -109,33 +105,29 @@ export default class Ae {
    ae.signTransaction("44'/60'/0'/0/0", "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(result => ...)
    */
   signTransaction(
-    path: string,
+    path: integer,
     rawTxHex: string
   ): Promise<{
     s: string,
     v: string,
     r: string
   }> {
-    let paths = splitPath(path);
     let offset = 0;
     let rawTx = new Buffer(rawTxHex, "hex");
     let toSend = [];
     let response;
     while (offset !== rawTx.length) {
-      let maxChunkSize = offset === 0 ? 150 - 1 - paths.length * 4 : 150;
+      let maxChunkSize = offset === 0 ? 150 - 1 : 150;
       let chunkSize =
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
       let buffer = new Buffer(
-        offset === 0 ? 1 + paths.length * 4 + chunkSize : chunkSize
+        offset === 0 ? 1 + chunkSize : chunkSize
       );
       if (offset === 0) {
-        buffer[0] = paths.length;
-        paths.forEach((element, index) => {
-          buffer.writeUInt32BE(element, 1 + 4 * index);
-        });
-        rawTx.copy(buffer, 1 + 4 * paths.length, offset, offset + chunkSize);
+        buffer[0] = path
+        rawTx.copy(buffer, 1, offset, offset + chunkSize);
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
       }
