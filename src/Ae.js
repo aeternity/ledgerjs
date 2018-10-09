@@ -65,6 +65,8 @@ export default class Ae {
     const response = await this.transport.send(
       CLA,
       GET_ADDRESS,
+      0x00,
+      0x00,
       buffer
     );
     const addressLength = response[0];
