@@ -105,7 +105,7 @@ export default class Ae {
       (p, data, i) => p.then(() => this.transport
         .send(CLA, SIGN_TRANSACTION, i === 0 ? 0x00 : 0x80, 0x00, data)),
       Promise.resolve());
-    return response.toString("hex");
+    return response.slice(0, 64).toString("hex");
   }
 
   /**
