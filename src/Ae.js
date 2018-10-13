@@ -17,7 +17,6 @@
 //@flow
 
 // FIXME drop:
-import { splitPath, foreach } from "./utils";
 import type Transport from "@ledgerhq/hw-transport";
 
 const CLA = 0xe0;
@@ -133,68 +132,47 @@ export default class Ae {
   }
 
   /**
-  * You can sign a message according to eth_sign RPC call and retrieve v, r, s given the message and the BIP 32 path of the account to sign.
+  * You can sign a message and retrieve signature given the message and the index of the account to sign.
   * @example
-ae.signPersonalMessage("44'/60'/0'/0/0", Buffer.from("test").toString("hex")).then(result => {
-  var v = result['v'] - 27;
-  v = v.toString(16);
-  if (v.length < 2) {
-    v = "0" + v;
-  }
-  console.log("Signature 0x" + result['r'] + result['s'] + v);
-})
+  ae.signPersonalMessage(0, Buffer.from("test").toString("hex")).then(signature => ...)
    */
-  signPersonalMessage(
-    path: string,
+  async signPersonalMessage(
+    accountIndex: number,
     messageHex: string
-  ): Promise<{
-    v: number,
-    s: string,
-    r: string
-  }> {
-    let paths = splitPath(path);
+  ): Promise<string> {
     let offset = 0;
-    let message = new Buffer(messageHex, "hex");
-    let toSend = [];
-    let response;
+    const message = new Buffer(messageHex, "hex");
+    const toSend = [];
     while (offset !== message.length) {
-      let maxChunkSize = offset === 0 ? 150 - 1 - paths.length * 4 - 4 : 150;
-      let chunkSize =
+      const maxChunkSize = offset === 0 ? 150 - 4 - 4 : 150;
+      const chunkSize =
         offset + maxChunkSize > message.length
           ? message.length - offset
           : maxChunkSize;
-      let buffer = new Buffer(
-        offset === 0 ? 1 + paths.length * 4 + 4 + chunkSize : chunkSize
-      );
+      const buffer = new Buffer(offset === 0 ? 4 + 4 + chunkSize : chunkSize);
       if (offset === 0) {
-        buffer[0] = paths.length;
-        paths.forEach((element, index) => {
-          buffer.writeUInt32BE(element, 1 + 4 * index);
-        });
-        buffer.writeUInt32BE(message.length, 1 + 4 * paths.length);
-        message.copy(
-          buffer,
-          1 + 4 * paths.length + 4,
-          offset,
-          offset + chunkSize
-        );
+        buffer.writeUInt32BE(accountIndex, 0);
+        buffer.writeUInt32BE(message.length, 4);
+        message.copy(buffer, 4 + 4, offset, offset + chunkSize);
       } else {
         message.copy(buffer, 0, offset, offset + chunkSize);
       }
       toSend.push(buffer);
       offset += chunkSize;
     }
-    return foreach(toSend, (data, i) =>
-      this.transport
-        .send(CLA, SIGN_PERSONAL_MESSAGE, i === 0 ? 0x00 : 0x80, 0x00, data)
-        .then(apduResponse => {
-          response = apduResponse;
-        })
-    ).then(() => {
-      const v = response[0];
-      const r = response.slice(1, 1 + 32).toString("hex");
-      const s = response.slice(1 + 32, 1 + 32 + 32).toString("hex");
-      return { v, r, s };
-    });
+    const response = await toSend.reduce(
+      (p, data, i) =>
+        p.then(() =>
+          this.transport.send(
+            CLA,
+            SIGN_PERSONAL_MESSAGE,
+            i === 0 ? 0x00 : 0x80,
+            0x00,
+            data
+          )
+        ),
+      Promise.resolve(new Buffer([]))
+    );
+    return response.slice(0, 64).toString("hex");
   }
 }
