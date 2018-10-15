@@ -57,11 +57,9 @@ export default class Ae {
    * @example
    * ae.getAddress(0).then(address => ...)
    */
-  async getAddress(
-    accountIndex: integer
-  ): Promise<string> {
+  async getAddress(accountIndex: number): Promise<string> {
     const buffer = new Buffer(4);
-    buffer.writeUInt32BE(accountIndex);
+    buffer.writeUInt32BE(accountIndex, 0);
     const response = await this.transport.send(
       CLA,
       GET_ADDRESS,
@@ -79,7 +77,7 @@ export default class Ae {
    ae.signTransaction(0, "e8018504e3b292008252089428ee52a8f3d6e5d15f8b131996950d7f296c7952872bd72a2487400080").then(signature => ...)
    */
   async signTransaction(
-    accountIndex: integer,
+    accountIndex: number,
     rawTxHex: string
   ): Promise<string> {
     let offset = 0;
@@ -91,11 +89,9 @@ export default class Ae {
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
-      const buffer = new Buffer(
-        offset === 0 ? 4 + chunkSize : chunkSize
-      );
+      const buffer = new Buffer(offset === 0 ? 4 + chunkSize : chunkSize);
       if (offset === 0) {
-        buffer.writeUInt32BE(accountIndex);
+        buffer.writeUInt32BE(accountIndex, 0);
         rawTx.copy(buffer, 4, offset, offset + chunkSize);
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
@@ -104,9 +100,18 @@ export default class Ae {
       offset += chunkSize;
     }
     const response = await toSend.reduce(
-      (p, data, i) => p.then(() => this.transport
-        .send(CLA, SIGN_TRANSACTION, i === 0 ? 0x00 : 0x80, 0x00, data)),
-      Promise.resolve());
+      (p, data, i) =>
+        p.then(() =>
+          this.transport.send(
+            CLA,
+            SIGN_TRANSACTION,
+            i === 0 ? 0x00 : 0x80,
+            0x00,
+            data
+          )
+        ),
+      Promise.resolve(new Buffer([]))
+    );
     return response.slice(0, 64).toString("hex");
   }
 
@@ -116,12 +121,15 @@ export default class Ae {
     arbitraryDataEnabled: number,
     version: string
   }> {
-    return this.transport.send(CLA, GET_APP_CONFIGURATION, 0x00, 0x00).then(response => {
-      let result = {};
-      result.arbitraryDataEnabled = response[0] & 0x01;
-      result.version = "" + response[1] + "." + response[2] + "." + response[3];
-      return result;
-    });
+    return this.transport
+      .send(CLA, GET_APP_CONFIGURATION, 0x00, 0x00)
+      .then(response => {
+        let result = {};
+        result.arbitraryDataEnabled = response[0] & 0x01;
+        result.version =
+          "" + response[1] + "." + response[2] + "." + response[3];
+        return result;
+      });
   }
 
   /**
