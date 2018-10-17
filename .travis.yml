@@ -9,7 +9,7 @@ deploy:
   provider: pages
   skip-cleanup: true
   github-token: $GITHUB_TOKEN
-  local-dir: packages/documentation-website/build/
+  local-dir: docs/
   keep-history: true
   on:
     branch: master
