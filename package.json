@@ -51,7 +51,7 @@
   },
   "scripts": {
     "test": "yarn run build && yarn run lint && yarn run flow && yarn run prettier-diff",
-    "documentation": "documentation build src/** --project-name '@aeternity/ledger-app-api' --project-version `node -e \"console.log(require('./package.json').version)\"` --project-homepage https://github.com/aeternity/ledger-app-api --config documentation.yml -g -f html -o packages/documentation-website/public/docs",
+    "documentation": "documentation build src/** --project-name '@aeternity/ledger-app-api' --project-version `node -e \"console.log(require('./package.json').version)\"` --project-homepage https://github.com/aeternity/ledger-app-api -g -f html -o docs",
     "prettier": "prettier --write 'src/**/*.js'",
     "prettier-diff": "prettier --list-different 'src/**/*.js'",
     "lint": "eslint src",
