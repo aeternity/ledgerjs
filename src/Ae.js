@@ -52,17 +52,21 @@ export default class Ae {
   /**
    * get aeternity address for a given account index.
    * @param accountIndex
+   * @option verify optionally enable or disable address verification
    * @return address
    * @example
-   * ae.getAddress(0).then(address => ...)
+   * ae.getAddress(0, true).then(address => ...)
    */
-  async getAddress(accountIndex: number): Promise<string> {
+  async getAddress(
+    accountIndex: number,
+    verify: boolean = false
+  ): Promise<string> {
     const buffer = new Buffer(4);
     buffer.writeUInt32BE(accountIndex, 0);
     const response = await this.transport.send(
       CLA,
       GET_ADDRESS,
-      0x00,
+      verify ? 0x01 : 0x00,
       0x00,
       buffer
     );
