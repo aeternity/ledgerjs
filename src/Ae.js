@@ -71,7 +71,7 @@ export default class Ae {
       buffer
     );
     const addressLength = response[0];
-    return `ak_${response.slice(1, 1 + addressLength).toString("ascii")}`;
+    return response.slice(1, 1 + addressLength).toString("ascii");
   }
 
   /**
