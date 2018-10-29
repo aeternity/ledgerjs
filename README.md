@@ -1,9 +1,26 @@
-<img src="https://user-images.githubusercontent.com/211411/34776833-6f1ef4da-f618-11e7-8b13-f0697901d6a8.png" height="100" />
+# æternity ledger app api [![Build Status](https://api.travis-ci.org/aeternity/ledger-app-api.svg?branch=master)](https://api.travis-ci.org/aeternity/ledger-app-api)
 
-## @ledgerhq/hw-app-eth
+## Overview
+This is the API to the [æternity ledger app](https://github.com/aeternity/ledger-app). With this API, you can communicate directly with the æternity ledger app and use embedded features such as requesting an address or signing transaction.
 
-Library for Ledger Hardware Wallets.
+Each call to the API can trigger an UI response to the Ledger app, where the user will be able to validate the request.
 
-[Github](https://github.com/LedgerHQ/ledgerjs/),
-[API Doc](http://ledgerhq.github.io/ledgerjs/),
-[Ledger Devs Slack](https://ledger-dev.slack.com/)
+## Installation & Usage
+Install the æternity ledger app api via [npm](https://www.npmjs.com/)
+```
+npm install @aeternity/ledger-app-api
+```
+Import the æternity ledger app api and transport u2f
+```js
+import Ae from "@aeternity/ledger-app-api";
+import TransportU2F from "@ledgerhq/hw-transport-u2f";
+```
+Here's an example of a api usage:
+```js
+const transport = await TransportU2F.create();
+const ae = new Ae(transport);
+let address = await ae.getAddress(0);
+```
+
+## Documentation
+Full documentation can be found at [aeternity.github.io/ledger-app-api](https://aeternity.github.io/ledger-app-api/)
