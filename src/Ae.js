@@ -81,21 +81,33 @@ export default class Ae {
    */
   async signTransaction(
     accountIndex: number,
-    rawTxHex: string
+    rawTxHex: string,
+    networkId: string = "ae_mainnet"
   ): Promise<string> {
     let offset = 0;
     const rawTx = new Buffer(rawTxHex, "hex");
+    const networkIdBuffer = new Buffer(networkId);
     const toSend = [];
     while (offset !== rawTx.length) {
-      const maxChunkSize = offset === 0 ? 150 - 4 : 150;
+      const maxChunkSize =
+        offset === 0 ? 150 - 4 - 1 - networkIdBuffer.length : 150;
       const chunkSize =
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
-      const buffer = new Buffer(offset === 0 ? 4 + chunkSize : chunkSize);
+      const buffer = new Buffer(
+        offset === 0 ? 4 + 1 + networkIdBuffer.length + chunkSize : chunkSize
+      );
       if (offset === 0) {
         buffer.writeUInt32BE(accountIndex, 0);
-        rawTx.copy(buffer, 4, offset, offset + chunkSize);
+        buffer.writeUInt8(networkIdBuffer.length, 4);
+        networkIdBuffer.copy(buffer, 4 + 1, offset, networkIdBuffer.length);
+        rawTx.copy(
+          buffer,
+          4 + 1 + networkIdBuffer.length,
+          offset,
+          offset + chunkSize
+        );
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
       }
