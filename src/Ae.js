@@ -90,21 +90,24 @@ export default class Ae {
     const toSend = [];
     while (offset !== rawTx.length) {
       const maxChunkSize =
-        offset === 0 ? 150 - 4 - 1 - networkIdBuffer.length : 150;
+        offset === 0 ? 150 - 4 - 4 - 1 - networkIdBuffer.length : 150;
       const chunkSize =
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
       const buffer = new Buffer(
-        offset === 0 ? 4 + 1 + networkIdBuffer.length + chunkSize : chunkSize
+        offset === 0
+          ? 4 + 4 + 1 + networkIdBuffer.length + chunkSize
+          : chunkSize
       );
       if (offset === 0) {
         buffer.writeUInt32BE(accountIndex, 0);
-        buffer.writeUInt8(networkIdBuffer.length, 4);
-        networkIdBuffer.copy(buffer, 4 + 1, offset, networkIdBuffer.length);
+        buffer.writeUInt32BE(rawTx.length, 4);
+        buffer.writeUInt8(networkIdBuffer.length, 8);
+        networkIdBuffer.copy(buffer, 4 + 4 + 1, offset, networkIdBuffer.length);
         rawTx.copy(
           buffer,
-          4 + 1 + networkIdBuffer.length,
+          4 + 4 + 1 + networkIdBuffer.length,
           offset,
           offset + chunkSize
         );
