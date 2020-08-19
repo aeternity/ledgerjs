@@ -84,33 +84,31 @@ export default class Ae {
     rawTxHex: string,
     networkId: string = "ae_mainnet"
   ): Promise<string> {
+    const [major, minor] = (await this._getAppConfiguration()).version.split(".").map(n => +n);
+    const acceptsTransactionLength = !(major === 0 && minor < 4);
     let offset = 0;
+    const headerLength  = 4 + 1 + (acceptsTransactionLength ? 4 : 0);
     const rawTx = new Buffer(rawTxHex, "hex");
     const networkIdBuffer = new Buffer(networkId);
     const toSend = [];
     while (offset !== rawTx.length) {
       const maxChunkSize =
-        offset === 0 ? 150 - 4 - 4 - 1 - networkIdBuffer.length : 150;
+        offset === 0 ? 150 - headerLength - networkIdBuffer.length : 150;
       const chunkSize =
         offset + maxChunkSize > rawTx.length
           ? rawTx.length - offset
           : maxChunkSize;
       const buffer = new Buffer(
         offset === 0
-          ? 4 + 4 + 1 + networkIdBuffer.length + chunkSize
+          ? headerLength + networkIdBuffer.length + chunkSize
           : chunkSize
       );
       if (offset === 0) {
-        buffer.writeUInt32BE(accountIndex, 0);
-        buffer.writeUInt32BE(rawTx.length, 4);
-        buffer.writeUInt8(networkIdBuffer.length, 8);
-        networkIdBuffer.copy(buffer, 4 + 4 + 1, offset, networkIdBuffer.length);
-        rawTx.copy(
-          buffer,
-          4 + 4 + 1 + networkIdBuffer.length,
-          offset,
-          offset + chunkSize
-        );
+        let bufferOffset = buffer.writeUInt32BE(accountIndex, 0);
+        if (acceptsTransactionLength) bufferOffset = buffer.writeUInt32BE(rawTx.length, bufferOffset);
+        bufferOffset = buffer.writeUInt8(networkIdBuffer.length, bufferOffset);
+        bufferOffset += networkIdBuffer.copy(buffer, bufferOffset, 0, networkIdBuffer.length);
+        rawTx.copy(buffer, bufferOffset, 0, 150 - bufferOffset);
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
       }
@@ -149,6 +147,8 @@ export default class Ae {
         return result;
       });
   }
+
+  _getAppConfiguration = this.getAppConfiguration;
 
   /**
   * You can sign a message and retrieve signature given the message and the index of the account to sign.
