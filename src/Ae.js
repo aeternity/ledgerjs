@@ -84,10 +84,12 @@ export default class Ae {
     rawTxHex: string,
     networkId: string = "ae_mainnet"
   ): Promise<string> {
-    const [major, minor] = (await this._getAppConfiguration()).version.split(".").map(n => +n);
+    const [major, minor] = (await this._getAppConfiguration()).version
+      .split(".")
+      .map(n => +n);
     const acceptsTransactionLength = !(major === 0 && minor < 4);
     let offset = 0;
-    const headerLength  = 4 + 1 + (acceptsTransactionLength ? 4 : 0);
+    const headerLength = 4 + 1 + (acceptsTransactionLength ? 4 : 0);
     const rawTx = new Buffer(rawTxHex, "hex");
     const networkIdBuffer = new Buffer(networkId);
     const toSend = [];
@@ -105,9 +107,15 @@ export default class Ae {
       );
       if (offset === 0) {
         let bufferOffset = buffer.writeUInt32BE(accountIndex, 0);
-        if (acceptsTransactionLength) bufferOffset = buffer.writeUInt32BE(rawTx.length, bufferOffset);
+        if (acceptsTransactionLength)
+          bufferOffset = buffer.writeUInt32BE(rawTx.length, bufferOffset);
         bufferOffset = buffer.writeUInt8(networkIdBuffer.length, bufferOffset);
-        bufferOffset += networkIdBuffer.copy(buffer, bufferOffset, 0, networkIdBuffer.length);
+        bufferOffset += networkIdBuffer.copy(
+          buffer,
+          bufferOffset,
+          0,
+          networkIdBuffer.length
+        );
         rawTx.copy(buffer, bufferOffset, 0, 150 - bufferOffset);
       } else {
         rawTx.copy(buffer, 0, offset, offset + chunkSize);
