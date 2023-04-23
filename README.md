@@ -1,3 +1,7 @@
+# Deprecated
+
+Ledger HW support maintained in @aeternity/aepp-sdk (see [AccountLedger, AccountLedgerFactory](https://github.com/aeternity/aepp-sdk-js/blob/79a2c5a/docs/guides/ledger-wallet.md)).
+
 # æternity ledger app api
 [![Build Status](https://api.travis-ci.org/aeternity/ledger-app-api.svg?branch=master)](https://api.travis-ci.org/aeternity/ledger-app-api)
 [![npm](https://img.shields.io/npm/v/@aeternity/ledger-app-api.svg)](https://www.npmjs.com/package/@aeternity/ledger-app-api)
